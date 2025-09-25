@@ -31,7 +31,7 @@ const MapComponent = () => {
 };
 
 const App = () => {
-  const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+  const apiKey = "AIzaSyBe4KQrcg7h4rNHu9x7rnPwRHxZv2v7Kk8";
 
   if (!apiKey) {
     return (
