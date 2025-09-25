@@ -33,7 +33,7 @@ const GoogleMapComponent = () => {
     if (ref.current && !map) {
       try {
         const newMap = new window.google.maps.Map(ref.current, {
-          center: { lat: -1.2884, lng: 36.8233 }, // Nairobi, Kenya
+          center: { lat: 25.4670, lng: 91.3662 }, // Shillong, Meghalaya, India
           zoom: 14,
         });
         setMap(newMap);
@@ -54,7 +54,7 @@ const FallbackMap = () => {
         <p>Using free OpenStreetMap - No API key required</p>
       </div>
       <MapContainer
-        center={[-1.2884, 36.8233]} // Nairobi, Kenya
+        center={[25.4670, 91.3662]} // Shillong, Meghalaya, India
         zoom={14}
         style={{ height: 'calc(100vh - 80px)', width: '100%' }}
       >
@@ -62,9 +62,9 @@ const FallbackMap = () => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Marker position={[-1.2884, 36.8233]}>
+        <Marker position={[25.4670, 91.3662]}>
           <Popup>
-            Nairobi, Kenya<br />
+            Shillong, Meghalaya, India<br />
             Default location marker
           </Popup>
         </Marker>
