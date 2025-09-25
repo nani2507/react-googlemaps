@@ -1,29 +1,55 @@
-import React, { Component } from 'react';
-import { Map, GoogleApiWrapper } from 'google-maps-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Wrapper, Status } from '@googlemaps/react-wrapper';
+import './App.css';
 
-const mapStyles = {
-  width: '100%',
-  height: '100%'
+const render = (status) => {
+  switch (status) {
+    case Status.LOADING:
+      return <div>Loading...</div>;
+    case Status.FAILURE:
+      return <div>Error loading Google Maps</div>;
+    case Status.SUCCESS:
+      return <MapComponent />;
+  }
 };
 
-export class MapContainer extends Component {
-  render() {
+const MapComponent = () => {
+  const ref = useRef(null);
+  const [map, setMap] = useState();
+
+  useEffect(() => {
+    if (ref.current && !map) {
+      const newMap = new window.google.maps.Map(ref.current, {
+        center: { lat: -1.2884, lng: 36.8233 }, // Nairobi, Kenya
+        zoom: 14,
+      });
+      setMap(newMap);
+    }
+  }, [ref, map]);
+
+  return <div ref={ref} style={{ width: '100%', height: '100vh' }} />;
+};
+
+const App = () => {
+  const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+
+  if (!apiKey) {
     return (
-      <Map
-        google={this.props.google}
-        zoom={14}
-        style={mapStyles}
-        initialCenter={
-          {
-            lat: -1.2884,
-            lng: 36.8233
-          }
-        }
-      />
+      <div className="App">
+        <div className="App-header">
+          <h2>Google Maps API Key Required</h2>
+          <p>Please add your Google Maps API key to the .env file</p>
+          <code>REACT_APP_GOOGLE_MAPS_API_KEY=your_api_key_here</code>
+        </div>
+      </div>
     );
   }
-}
 
-export default GoogleApiWrapper({
-  apiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY_HERE'
-})(MapContainer);
+  return (
+    <div className="App">
+      <Wrapper apiKey={apiKey} render={render} />
+    </div>
+  );
+};
+
+export default App;
