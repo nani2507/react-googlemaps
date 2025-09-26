@@ -1,88 +1,98 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Wrapper, Status } from '@googlemaps/react-wrapper';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
+import tt from '@tomtom-international/web-sdk-maps';
+import '@tomtom-international/web-sdk-maps/dist/maps.css';
 import './App.css';
 
-// Fix for default markers in react-leaflet
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+const TomTomMap = () => {
+  const mapElement = useRef();
+  const [map, setMap] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-const render = (status) => {
-  switch (status) {
-    case Status.LOADING:
-      return <div className="loading">Loading Google Maps...</div>;
-    case Status.FAILURE:
-      return <FallbackMap />;
-    case Status.SUCCESS:
-      return <GoogleMapComponent />;
-    default:
-      return <FallbackMap />;
-  }
-};
-
-const GoogleMapComponent = () => {
-  const ref = useRef(null);
-  const [map, setMap] = useState();
+  const apiKey = '3f0SKnsBqxRHoegygPl1LM7UjuvQ0DMq';
 
   useEffect(() => {
-    if (ref.current && !map) {
+    if (mapElement.current && !map) {
       try {
-        const newMap = new window.google.maps.Map(ref.current, {
-          center: { lat: 25.4670, lng: 91.3662 }, // Shillong, Meghalaya, India
+        const ttMap = tt.map({
+          key: apiKey,
+          container: mapElement.current,
+          center: [91.3662, 25.4670], // Shillong, Meghalaya, India [lng, lat]
           zoom: 14,
+          style: 'tomtom://vector/1/basic-main'
         });
-        setMap(newMap);
-      } catch (error) {
-        console.error('Google Maps failed to load:', error);
+
+        // Add marker for Meghalaya
+        const marker = new tt.Marker()
+          .setLngLat([91.3662, 25.4670])
+          .addTo(ttMap);
+
+        // Add popup to marker
+        const popup = new tt.Popup({ offset: 35 })
+          .setHTML('<div><strong>Shillong, Meghalaya</strong><br/>Capital of Meghalaya, India</div>');
+        
+        marker.setPopup(popup);
+
+        ttMap.on('load', () => {
+          setLoading(false);
+        });
+
+        ttMap.on('error', (e) => {
+          console.error('TomTom Map error:', e);
+          setError('Failed to load TomTom Map');
+          setLoading(false);
+        });
+
+        setMap(ttMap);
+
+        // Cleanup function
+        return () => {
+          if (ttMap) {
+            ttMap.remove();
+          }
+        };
+      } catch (err) {
+        console.error('Error initializing TomTom map:', err);
+        setError('Failed to initialize map');
+        setLoading(false);
       }
     }
-  }, [ref, map]);
+  }, [apiKey, map]);
 
-  return <div ref={ref} style={{ width: '100%', height: '100vh' }} />;
-};
-
-const FallbackMap = () => {
-  return (
-    <div style={{ width: '100%', height: '100vh' }}>
-      <div className="map-header">
-        <h3>Map View (OpenStreetMap)</h3>
-        <p>Using free OpenStreetMap - No API key required</p>
+  if (loading) {
+    return (
+      <div className="loading">
+        <div className="loading-spinner"></div>
+        <p>Loading TomTom Map...</p>
       </div>
-      <MapContainer
-        center={[25.4670, 91.3662]} // Shillong, Meghalaya, India
-        zoom={14}
-        style={{ height: 'calc(100vh - 80px)', width: '100%' }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        <Marker position={[25.4670, 91.3662]}>
-          <Popup>
-            Shillong, Meghalaya, India<br />
-            Default location marker
-          </Popup>
-        </Marker>
-      </MapContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="error">
+        <h3>Map Error</h3>
+        <p>{error}</p>
+        <p>Please check your TomTom API key and internet connection.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="map-container">
+      <div className="map-header">
+        <h2>📍 Meghalaya, India</h2>
+        <p>Powered by TomTom Maps</p>
+      </div>
+      <div ref={mapElement} className="map" />
     </div>
   );
 };
 
 const App = () => {
-  const apiKey = "AIzaSyBe4KQrcg7h4rNHu9x7rnPwRHxZv2v7Kk8";
-
   return (
     <div className="App">
-      <Wrapper 
-        apiKey={apiKey} 
-        render={render}
-        libraries={['places']}
-      />
+      <TomTomMap />
     </div>
   );
 };
