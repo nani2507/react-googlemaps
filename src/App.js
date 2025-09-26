@@ -10,7 +10,7 @@ const TomTomMap = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const apiKey = '3f0SKnsBqxRHoegygPl1LM7UjuvQ0DMq';
+  const apiKey = process.env.REACT_APP_TOMTOM_API_KEY;
 
   useEffect(() => {
     let ttMap = null;
