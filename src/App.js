@@ -25,21 +25,41 @@ const TomTomMap = () => {
           key: apiKey,
           container: mapElement.current,
           center: [91.3662, 25.4670],
-          zoom: 13,
+          zoom: 15,
           style: 'tomtom://vector/1/basic-main',
+          stylesVisibility: {
+            trafficIncidents: true,
+            trafficFlow: true
+          },
           dragPan: true,
-          scrollZoom: true
+          scrollZoom: true,
+          doubleClickZoom: true,
+          keyboard: true
         });
 
-        // Add marker immediately
-        const marker = new tt.Marker()
-          .setLngLat([91.3662, 25.4670])
-          .addTo(ttMap);
+        // Wait for map to load completely before adding markers
+        ttMap.on('load', () => {
+          // Add marker with better visibility
+          const marker = new tt.Marker({
+            color: '#FF0000',
+            scale: 1.2
+          })
+            .setLngLat([91.3662, 25.4670])
+            .addTo(ttMap);
 
-        const popup = new tt.Popup({ offset: 35 })
-          .setHTML('<div><strong>Shillong, Meghalaya</strong><br/>Capital of Meghalaya, India</div>');
-        
-        marker.setPopup(popup);
+          const popup = new tt.Popup({ 
+            offset: 35,
+            closeButton: true,
+            closeOnClick: false
+          })
+            .setHTML('<div><strong>Shillong, Meghalaya</strong><br/>Capital of Meghalaya, India<br/>Zoom: 15 - Streets visible</div>');
+          
+          marker.setPopup(popup);
+          
+          // Show popup by default
+          popup.addTo(ttMap);
+          popup.setLngLat([91.3662, 25.4670]);
+        });
 
         setMap(ttMap);
         setLoading(false);
