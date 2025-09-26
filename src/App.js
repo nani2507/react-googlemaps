@@ -1,16 +1,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import tt from '@tomtom-international/web-sdk-maps';
 import '@tomtom-international/web-sdk-maps/dist/maps.css';
-import '@tomtom-international/web-sdk-maps/dist/maps.css';
 import './App.css';
 
 const TomTomMap = () => {
   const mapElement = useRef();
   const [map, setMap] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const apiKey = process.env.REACT_APP_TOMTOM_API_KEY;
+  // Use the API key directly - environment variables can sometimes cause issues
+  const apiKey = '3f0SKnsBqxRHoegygPl1LM7UjuvQ0DMq';
 
   useEffect(() => {
     let ttMap = null;
@@ -18,75 +18,96 @@ const TomTomMap = () => {
     const initializeMap = async () => {
       if (!mapElement.current || map) return;
       
-      setLoading(true);
+      // Validate API key first
+      if (!apiKey || apiKey.length < 10) {
+        setError('Invalid TomTom API key');
+        setLoading(false);
+        return;
+      }
       
       try {
+        console.log('Initializing TomTom map with API key:', apiKey.substring(0, 8) + '...');
+        
         ttMap = tt.map({
           key: apiKey,
           container: mapElement.current,
           center: [91.3662, 25.4670],
-          zoom: 15,
-          style: 'tomtom://vector/1/basic-main',
+          zoom: 13,
           stylesVisibility: {
             trafficIncidents: true,
             trafficFlow: true
           },
-          dragPan: true,
-          scrollZoom: true,
-          doubleClickZoom: true,
-          keyboard: true
+          interactive: true
         });
 
-        // Wait for map to load completely before adding markers
+        // Add error handling for map loading
+        ttMap.on('error', (e) => {
+          console.error('TomTom map error:', e);
+          setError('Map failed to load. Please check your internet connection.');
+          setLoading(false);
+        });
+
+        // Wait for map to load completely
         ttMap.on('load', () => {
-          // Add marker with better visibility
-          const marker = new tt.Marker({
-            color: '#FF0000',
-            scale: 1.2
-          })
-            .setLngLat([91.3662, 25.4670])
-            .addTo(ttMap);
+          console.log('TomTom map loaded successfully');
+          
+          try {
+            // Add marker
+            const marker = new tt.Marker({
+              color: '#FF0000'
+            })
+              .setLngLat([91.3662, 25.4670])
+              .addTo(ttMap);
 
-          const popup = new tt.Popup({ 
-            offset: 35,
-            closeButton: true,
-            closeOnClick: false
-          })
-            .setHTML('<div><strong>Shillong, Meghalaya</strong><br/>Capital of Meghalaya, India<br/>Zoom: 15 - Streets visible</div>');
-          
-          marker.setPopup(popup);
-          
-          // Show popup by default
-          popup.addTo(ttMap);
-          popup.setLngLat([91.3662, 25.4670]);
+            // Add popup
+            const popup = new tt.Popup({ 
+              offset: 35
+            })
+              .setHTML('<div><strong>Shillong, Meghalaya</strong><br/>Capital of Meghalaya, India</div>');
+            
+            marker.setPopup(popup);
+            
+            setLoading(false);
+            setMap(ttMap);
+            
+          } catch (markerError) {
+            console.error('Error adding marker:', markerError);
+            setLoading(false);
+            setMap(ttMap); // Still show map even if marker fails
+          }
         });
 
-        setMap(ttMap);
-        setLoading(false);
+        // Timeout fallback
+        setTimeout(() => {
+          if (loading) {
+            console.log('Map loading timeout, showing anyway');
+            setLoading(false);
+            setMap(ttMap);
+          }
+        }, 10000);
         
       } catch (err) {
         console.error('Error initializing TomTom map:', err);
-        setError('Failed to initialize map');
+        setError(`Failed to initialize map: ${err.message}`);
         setLoading(false);
       }
     };
 
-    // Initialize map immediately
     initializeMap();
 
-    // Cleanup function
     return () => {
       if (ttMap) {
         ttMap.remove();
       }
     };
-  }, []);
+  }, [apiKey]);
 
   if (loading) {
     return (
       <div className="loading">
         <div className="loading-spinner"></div>
-        <p>Initializing Map...</p>
+        <p>Loading TomTom Map...</p>
+        <p style={{fontSize: '12px', opacity: 0.7}}>This may take a few moments...</p>
       </div>
     );
   }
@@ -96,7 +117,18 @@ const TomTomMap = () => {
       <div className="error">
         <h3>Map Error</h3>
         <p>{error}</p>
-        <p>Please check your TomTom API key and internet connection.</p>
+        <p>API Key: {apiKey ? apiKey.substring(0, 8) + '...' : 'Missing'}</p>
+        <button onClick={() => window.location.reload()} style={{
+          padding: '10px 20px',
+          background: '#667eea',
+          color: 'white',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer',
+          marginTop: '10px'
+        }}>
+          Retry
+        </button>
       </div>
     );
   }
